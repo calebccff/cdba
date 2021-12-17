@@ -73,3 +73,9 @@ void console_send_break(struct device *device)
 {
 	tcsendbreak(device->console_fd, 0);
 }
+
+const struct console_ops console_ops = {
+	.open = console_open,
+	.write = console_write,
+	.send_break = console_send_break,
+};

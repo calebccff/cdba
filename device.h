@@ -7,6 +7,23 @@
 struct cdb_assist;
 struct fastboot;
 struct fastboot_ops;
+struct device;
+
+struct control_ops {
+	void *(*open)(struct device *dev);
+	void (*close)(struct device *dev);
+	int (*power)(struct device *dev, bool on);
+	void (*usb)(struct device *dev, bool on);
+	void (*key)(struct device *device, int key, bool asserted);
+	void (*print_status)(struct device *dev);
+};
+
+struct console_ops {
+	void (*open)(struct device *dev);
+	int (*write)(struct device *dev, const void *buf, size_t len);
+
+	void (*send_break)(struct device *dev);
+};
 
 struct device {
 	char *board;
@@ -25,16 +42,9 @@ struct device {
 
 	void (*boot)(struct device *);
 
-	void *(*open)(struct device *dev);
-	void (*close)(struct device *dev);
-	int (*power)(struct device *dev, bool on);
-	void (*usb)(struct device *dev, bool on);
-	void (*print_status)(struct device *dev);
-	int (*write)(struct device *dev, const void *buf, size_t len);
-	void (*fastboot_key)(struct device *dev, bool on);
-	void (*key)(struct device *device, int key, bool asserted);
+	const struct control_ops *control_ops;
+	const struct console_ops *console_ops;
 
-	void (*send_break)(struct device *dev);
 	bool set_active;
 
 	void *cdb;
@@ -67,5 +77,14 @@ enum {
 	DEVICE_KEY_FASTBOOT,
 	DEVICE_KEY_POWER,
 };
+
+extern const struct control_ops alpaca_ops;
+extern const struct control_ops cdb_assist_ops;
+extern const struct control_ops conmux_ops;
+extern const struct control_ops ftdi_gpio_ops;
+extern const struct control_ops qcomlt_dbg_ops;
+
+extern const struct console_ops conmux_console_ops;
+extern const struct console_ops console_ops;
 
 #endif
