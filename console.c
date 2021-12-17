@@ -55,7 +55,7 @@ static int console_data(int fd, void *data)
 	return 0;
 }
 
-void console_open(struct device *device)
+static void console_open(struct device *device)
 {
 	device->console_fd = tty_open(device->console_dev, &device->console_tios);
 	if (device->console_fd < 0)
@@ -64,12 +64,12 @@ void console_open(struct device *device)
 	watch_add_readfd(device->console_fd, console_data, device);
 }
 
-int console_write(struct device *device, const void *buf, size_t len)
+static int console_write(struct device *device, const void *buf, size_t len)
 {
 	return write(device->console_fd, buf, len);;
 }
 
-void console_send_break(struct device *device)
+static void console_send_break(struct device *device)
 {
 	tcsendbreak(device->console_fd, 0);
 }
