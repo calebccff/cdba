@@ -55,6 +55,9 @@ struct device {
 	struct list_head node;
 };
 
+#define device_has_control(_dev, _op) \
+	((_dev) && (_dev)->control_ops && (_dev)->control_ops->_op)
+
 void device_add(struct device *device);
 
 struct device *device_open(const char *board, struct fastboot_ops *fastboot_ops);

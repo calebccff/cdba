@@ -99,7 +99,7 @@ found:
 
 	device_lock(device);
 
-	if (device->control_ops && device->control_ops->open) {
+	if (device_has_control(device, open)) {
 		device->cdb = device->control_ops->open(device);
 		if (!device->cdb)
 			errx(1, "failed to open device controller");
@@ -123,7 +123,7 @@ static void device_impl_power(struct device *device, bool on)
 
 static void device_key(struct device *device, int key, bool asserted)
 {
-	if (device->control_ops && device->control_ops->key)
+	if (device_has_control(device, key))
 		device->control_ops->key(device, key, asserted);
 }
 
@@ -193,7 +193,7 @@ static void device_tick(void *data)
 
 static int device_power_on(struct device *device)
 {
-	if (!device || !device->control_ops || !device->control_ops->power)
+	if (!device_has_control(device, power))
 		return 0;
 
 	device->state = DEVICE_STATE_START;
@@ -204,7 +204,7 @@ static int device_power_on(struct device *device)
 
 static int device_power_off(struct device *device)
 {
-	if (!device || !device->control_ops || !device->control_ops->power)
+	if (!device_has_control(device, power))
 		return 0;
 
 	device->control_ops->power(device, false);
@@ -222,13 +222,13 @@ int device_power(struct device *device, bool on)
 
 void device_print_status(struct device *device)
 {
-	if (device->control_ops && device->control_ops->print_status)
+	if (device_has_control(device, print_status))
 		device->control_ops->print_status(device);
 }
 
 void device_usb(struct device *device, bool on)
 {
-	if (device->control_ops && device->control_ops->usb)
+	if (device_has_control(device, usb))
 		device->control_ops->usb(device, on);
 }
 
@@ -320,6 +320,6 @@ void device_close(struct device *dev)
 		device_usb(dev, false);
 	device_power(dev, false);
 
-	if (dev->control_ops && dev->control_ops->close)
+	if (device_has_control(dev, close))
 		dev->control_ops->close(dev);
 }
