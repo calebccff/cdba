@@ -120,6 +120,9 @@ static void parse_board(struct device_parser *dp)
 		} else if (!strcmp(key, "alpaca")) {
 			dev->control_dev = strdup(value);
 			set_control_ops(dev, &alpaca_ops);
+		} else if (!strcmp(key, "external")) {
+			dev->control_dev = strdup(value);
+			set_control_ops(dev, &external_ops);
 		} else if (!strcmp(key, "ftdi_gpio")) {
 			dev->control_dev = strdup(value);
 			set_control_ops(dev, &ftdi_gpio_ops);
