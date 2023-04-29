@@ -38,11 +38,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "cdba-server.h"
 #include "ftdi-gpio.h"
 
-#include "ftdi.h"
+#include <ftdi.h>
 
 enum {
 	GPIO_POWER = 0,			// Power input enable
@@ -56,6 +57,9 @@ enum {
 	GPIO_ACTIVE_HIGH = 0,
 	GPIO_ACTIVE_LOW,
 };
+
+#define DTR_PIN (~0 - 1)
+#define RTS_PIN (~0 - 2)
 
 struct ftdi_gpio {
 	struct ftdi_context *gpio;
@@ -76,10 +80,11 @@ static void ftdi_gpio_device_usb(struct ftdi_gpio *ftdi_gpio, bool on);
  * - interface: A, B, C or D (default A)
  * - gpios: type,id,polarity
  *   - type: POWER, FASTBOOT_KEY, POWER_KEY or USB_DISCONNECT
- *   - id: 0, 1, 2, 3, 4, 5, 6 or 7
+ *   - id: 0, 1, 2, 3, 4, 5, 6, 7, dtr or rts
  *   - polarity: ACTIVE_HIGH or ACTIVE_LOW
  *
  * Example: s:0xVEND:0xPROD:SERIAL;D;POWER,0,ACTIVE_LOW;FASTBOOT_KEY,1,ACTIVE_HIGH;POWER_KEY,2,ACTIVE_HIGH;USB_DISCONNECT,3,ACTIVE_LOW
+ * Example: i:0x0403:0x6001;A;POWER,DTR,ACTIVE_LOW;FASTBOOT_KEY,RTS,ACTIVE_LOW
  */
 
 static void ftdi_gpio_parse_config(struct ftdi_gpio *ftdi_gpio, char *control_dev)
@@ -140,10 +145,16 @@ static void ftdi_gpio_parse_config(struct ftdi_gpio *ftdi_gpio, char *control_de
 			gpio_type = GPIO_USB_DISCONNECT;
 		else
 			errx(1, "GPIOs type invalid: '%s'", name);
-
-		gpio_offset = strtoul(off, NULL, 0);
-		if (gpio_offset > 7)
-			errx(1, "GPIOs offset invalid: '%d'", gpio_offset);
+		
+		if (strncmp("RTS", off, 3) == 0)
+			gpio_offset = RTS_PIN;
+		else if (strncmp("DTR", off, 3) == 0)
+			gpio_offset = DTR_PIN;
+		else {
+			gpio_offset = strtoul(off, NULL, 0);
+			if (gpio_offset > 7)
+				errx(1, "GPIOs offset invalid: '%d'", gpio_offset);
+		}
 
 		if (strncmp("ACTIVE_HIGH", pol, c - pol - 1) == 0)
 			gpio_polarity = GPIO_ACTIVE_HIGH;
@@ -155,6 +166,25 @@ static void ftdi_gpio_parse_config(struct ftdi_gpio *ftdi_gpio, char *control_de
 		ftdi_gpio->gpio_present[gpio_type] = 1;
 		ftdi_gpio->gpio_offset[gpio_type] = gpio_offset;
 		ftdi_gpio->gpio_polarity[gpio_type] = gpio_polarity;
+	}
+}
+
+/* Ensure RTS and DTR pins aren't set */
+void ftdi_gpio_rtsdtr_init(struct ftdi_gpio *ftdi_gpio)
+{
+	int i = 0;
+
+	for (i = 0; i < GPIO_COUNT; i++) {
+		switch (ftdi_gpio->gpio_offset[i]) {
+		case DTR_PIN:
+			ftdi_setdtr(ftdi_gpio->gpio, !ftdi_gpio->gpio_polarity[i]);
+			break;
+		case RTS_PIN:
+			ftdi_setrts(ftdi_gpio->gpio, !ftdi_gpio->gpio_polarity[i]);
+			break;
+		default:
+			break;
+		}
 	}
 }
 
@@ -196,6 +226,15 @@ void *ftdi_gpio_open(struct device *dev)
 static int ftdi_gpio_toggle_io(struct ftdi_gpio *ftdi_gpio, unsigned int gpio, bool on)
 {
 	unsigned int bit;
+
+	switch (ftdi_gpio->gpio_offset[gpio]) {
+	case DTR_PIN:
+		return ftdi_setdtr(ftdi_gpio->gpio, ftdi_gpio->gpio_polarity[gpio] ^ on);
+	case RTS_PIN:
+		return ftdi_setrts(ftdi_gpio->gpio, ftdi_gpio->gpio_polarity[gpio] ^ on);
+	default:
+		break;
+	}
 
 	if (!ftdi_gpio->gpio_present[gpio])
 		return -EINVAL;

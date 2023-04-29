@@ -156,6 +156,8 @@ static void parse_board(struct device_parser *dp)
 		}
 	}
 
+	fprintf(stderr, "board: %s, serial: %s, console: %s\n", dev->board, dev->serial, dev->console_dev);
+
 	if (!dev->board || !dev->serial || !dev->console_dev) {
 		fprintf(stderr, "device parser: insufficiently defined device\n");
 		exit(1);

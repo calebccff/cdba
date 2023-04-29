@@ -190,6 +190,8 @@ static int handle_stdin(int fd, void *buf)
 		msg = malloc(sizeof(*msg) + hdr.len);
 		circ_read(&recv_buf, msg, sizeof(*msg) + hdr.len);
 
+		//fprintf(stderr, "Got message: %d\n", msg->type);
+
 		switch (msg->type) {
 		case MSG_CONSOLE:
 			device_write(selected_device, msg->data, msg->len);

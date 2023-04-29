@@ -29,6 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -48,6 +49,8 @@ static int external_helper(struct external *ext, const char *command, bool on)
 {
 	pid_t pid, pid_ret;
 	int status;
+
+	fprintf(stderr, "%s: %s %s\n", __func__, command, on ? "on": "off");
 
 	pid =  fork();
 	switch (pid) {

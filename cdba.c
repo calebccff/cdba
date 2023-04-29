@@ -111,6 +111,7 @@ static int fork_ssh(const char *host, const char *cmd, int *pipes)
 	case -1:
 		err(1, "failed to fork");
 	case 0:
+		fprintf( stderr, "ssh: host=%s, cmd=%s\n", host, cmd);
 		dup2(piped_stdin[0], STDIN_FILENO);
 		dup2(piped_stdout[1], STDOUT_FILENO);
 		dup2(piped_stderr[1], STDERR_FILENO);
@@ -499,7 +500,7 @@ static int handle_message(struct circ_buf *buf)
 
 		switch (msg->type) {
 		case MSG_SELECT_BOARD:
-			// printf("======================================== MSG_SELECT_BOARD\n");
+			printf("======================================== MSG_SELECT_BOARD\n");
 			request_power_on();
 			break;
 		case MSG_CONSOLE:
@@ -508,10 +509,10 @@ static int handle_message(struct circ_buf *buf)
 		case MSG_HARDRESET:
 			break;
 		case MSG_POWER_ON:
-			// printf("======================================== MSG_POWER_ON\n");
+			printf("======================================== MSG_POWER_ON\n");
 			break;
 		case MSG_POWER_OFF:
-			// printf("======================================== MSG_POWER_OFF\n");
+			printf("======================================== MSG_POWER_OFF\n");
 			if (auto_power_on) {
 				sleep(2);
 				request_power_on();
@@ -519,21 +520,21 @@ static int handle_message(struct circ_buf *buf)
 			break;
 		case MSG_FASTBOOT_PRESENT:
 			if (*(uint8_t*)msg->data) {
-				// printf("======================================== MSG_FASTBOOT_PRESENT(on)\n");
+				printf("======================================== MSG_FASTBOOT_PRESENT(on)\n");
 				if (!fastboot_done || fastboot_repeat)
 					request_fastboot_files();
 				else
 					quit = true;
 			} else {
 				fastboot_done = true;
-				// printf("======================================== MSG_FASTBOOT_PRESENT(off)\n");
+				printf("======================================== MSG_FASTBOOT_PRESENT(off)\n");
 			}
 			break;
 		case MSG_FASTBOOT_DOWNLOAD:
-			// printf("======================================== MSG_FASTBOOT_DOWNLOAD\n");
+			printf("======================================== MSG_FASTBOOT_DOWNLOAD\n");
 			break;
 		case MSG_FASTBOOT_BOOT:
-			// printf("======================================== MSG_FASTBOOT_BOOT\n");
+			printf("======================================== MSG_FASTBOOT_BOOT\n");
 			break;
 		case MSG_STATUS_UPDATE:
 			handle_status_update(msg->data, msg->len);
