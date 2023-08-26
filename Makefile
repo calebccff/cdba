@@ -5,7 +5,7 @@ SERVER := cdba-server
 
 all: $(CLIENT) $(SERVER)
 
-CFLAGS := -Wall -g -O2
+CFLAGS := -Wall -g
 # Wextra without few warnings
 CFLAGS := $(CFLAGS) -Wextra -Wno-unused-parameter -Wno-unused-result -Wno-missing-field-initializers -Wno-sign-compare
 
@@ -26,7 +26,9 @@ else
   $(info No compiler flags for: $(CC))
 endif
 
-LDFLAGS := -ludev -lyaml -lftdi -lusb
+LDFLAGS := -ludev -lyaml -lusb
+CFLAGS += $(shell pkg-config --silence-errors --cflags libfdti) $(shell pkg-config --silence-errors --cflags libftdi1)
+LDFLAGS += $(shell pkg-config --silence-errors --libs libftdi) $(shell pkg-config --silence-errors --libs libftdi1)
 
 CLIENT_SRCS := cdba.c circ_buf.c
 CLIENT_OBJS := $(CLIENT_SRCS:.c=.o)
