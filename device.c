@@ -185,13 +185,11 @@ static void device_tick(void *data)
 	switch (device->state) {
 	case DEVICE_STATE_START:
 		/* Make sure power key is not engaged */
-		if (device->fastboot_key_timeout)
-			device_key(device, DEVICE_KEY_FASTBOOT, true);
 		if (device->has_power_key)
 			device_key(device, DEVICE_KEY_POWER, false);
 
 		device->state = DEVICE_STATE_CONNECT;
-		watch_timer_add(10, device_tick, device);
+		watch_timer_add(50, device_tick, device);
 		break;
 	case DEVICE_STATE_CONNECT:
 		/* Connect power and USB */
@@ -211,6 +209,8 @@ static void device_tick(void *data)
 	case DEVICE_STATE_PRESS:
 		/* Press power key */
 		device_key(device, DEVICE_KEY_POWER, true);
+		if (device->fastboot_key_timeout)
+			device_key(device, DEVICE_KEY_FASTBOOT, true);
 
 		device->state = DEVICE_STATE_RELEASE_PWR;
 		watch_timer_add(100, device_tick, device);
